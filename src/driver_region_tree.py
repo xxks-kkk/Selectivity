@@ -71,6 +71,7 @@ if __name__ == "__main__":
         train_times, n_vars = est.train(4 * train_size, threshold)
 
         print("Training Size: ", train_size)
+        print("Test Size: ", test_size)
         print("Training Time: %.3f(s)" % (train_times))
 
         if eff_test:

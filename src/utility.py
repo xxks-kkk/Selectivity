@@ -209,6 +209,7 @@ def load_hypercube(dataset, train_size, test_size):
     cur_data_path = hd_data_path
     cur_query_filename = hd_query_filename[dataset]
     cur_min_max_filename = hd_min_max_filename[dataset]
+    print(f"training data set: {cur_data_path + cur_query_filename}")
 
     whole_list = []
     dim = -1
