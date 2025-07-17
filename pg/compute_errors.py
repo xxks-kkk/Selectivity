@@ -6,6 +6,7 @@ import random
 pg_data = 'plan_rows_results.csv'
 pg2_data = 'plan_rows_results_2.csv'
 mysql_data = '../mysql/mysql_filtered_results_2.csv'
+ndb_data = '../ndb/mysql_filtered_results_2.csv'
 data = mysql_data
 
 # Load the data
