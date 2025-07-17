@@ -3,8 +3,12 @@ import pandas as pd
 import math
 import random
 
+pg_data = 'plan_rows_results.csv'
+mysql_data = '../mysql/mysql_filtered_results.csv'
+data = mysql_data
+
 # Load the data
-df = pd.read_csv('plan_rows_results.csv')
+df = pd.read_csv(data)
 
 # Function to compute RMS Error
 def compute_rms_error(actual, predicted):
@@ -59,7 +63,7 @@ random.seed(42)
 # Total number of rows in the dataset
 total_rows = len(df)
 
-print(f"Computing errors for the last {test_size} rows of plan_rows_results.csv")
+print(f"Computing errors for the last {test_size} rows of {data}")
 print("==============================================\n")
 
 # Create a test set from the last 100 rows
