@@ -4,11 +4,12 @@ import math
 import random
 
 pg_data = 'plan_rows_results.csv'
-mysql_data = '../mysql/mysql_filtered_results.csv'
+pg2_data = 'plan_rows_results_2.csv'
+mysql_data = '../mysql/mysql_filtered_results_2.csv'
 data = mysql_data
 
 # Load the data
-df = pd.read_csv(data)
+df = pd.read_csv(pg2_data)
 
 # Function to compute RMS Error
 def compute_rms_error(actual, predicted):
