@@ -3,3 +3,5 @@ tables/
 src/__pycache__
 .DS_Store
 data/resources/
+normalized.csv
+original.csv
