@@ -23,6 +23,7 @@ def normalize_csv(input_file, output_file):
     print(df.describe())
     
     # Normalize each column to [0,1]
+    # This uses min-max normalization
     normalized_df = pd.DataFrame()
     for column in df.columns:
         min_val = df[column].min()
