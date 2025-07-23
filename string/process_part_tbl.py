@@ -1,5 +1,9 @@
 import csv
+from decimal import Decimal, getcontext
 from pyope.ope import OPE, ValueRange
+
+# Set precision for Decimal calculations
+getcontext().prec = 50
 
 # Input and output file paths
 input_file = '/Users/bytedance/projects/tpch/part.tbl'
@@ -30,11 +34,22 @@ def init_worker():
 
 # Function to convert a string to an integer using a given cipher
 def convert_string(value, column_index):
-    """Converts a string to an integer using the cipher for the given column index."""
-    # Convert the first 7 bytes of the string to an integer to preserve order.
-    # Pad with null bytes if the string is shorter than 7 characters.
-    padded_value = value.encode('utf-8').ljust(7, b'\x00')[:7]
-    int_value = int.from_bytes(padded_value, 'big')
+    """
+    Converts a string to an integer that preserves lexicographical order by treating
+    the string as a fractional number in base 256 using high-precision Decimals.
+    """
+    val = Decimal(0)
+    base = Decimal(256)
+    # Use up to 30 bytes for precision.
+    encoded_value = value.encode('utf-8')[:30]
+    for byte in reversed(encoded_value):
+        val = (val + byte) / base
+    
+    # Scale the fractional value to the OPE input range.
+    input_range_size = Decimal(INPUT_RANGE.end - INPUT_RANGE.start)
+    int_value = int(val * input_range_size)
+    # Clamp the value to be strictly within the range.
+    int_value = max(INPUT_RANGE.start, min(int_value, INPUT_RANGE.end))
     return worker_ciphers[column_index].encrypt(int_value)
 
 import os
