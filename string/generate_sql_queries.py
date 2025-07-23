@@ -44,63 +44,110 @@ def execute_query(query):
         print(f"Error executing query: {e}")
         return None
 
+def generate_type1_query(writer, check_selectivity):
+    """Generates and writes a single query of type 1."""
+    while True:
+        while True:
+            x1 = f"'{generate_random_string()}'".lower()
+            x2 = f"'{generate_random_string()}'".lower()
+            if x1 < x2:
+                break
+        
+        while True:
+            y1 = f"'{generate_random_string(1, 3, True)}'".upper()
+            y2 = f"'{generate_random_string(1, 3, True)}'".upper()
+            if y1 < y2:
+                break
+        
+        query = f"SELECT count(*)/200000.0 FROM part WHERE p_name BETWEEN {x1} AND {x2} AND p_type BETWEEN {y1} AND {y2}"
+        selectivity = execute_query(query)
+        
+        if selectivity is not None:
+            if not check_selectivity or selectivity >= 0.00001:
+                writer.writerow([x1, y1, x2, y2, selectivity])
+                return True
+    return False
+
+def generate_type2_query(writer, check_selectivity):
+    """Generates and writes a single query of type 2."""
+    while True:
+        while True:
+            x1 = f"'{generate_random_string()}'".lower()
+            x2 = f"'{generate_random_string()}'".lower()
+            if x1 < x2:
+                break
+        
+        y1 = f"'{generate_p_type()}'".upper()
+        y2 = y1
+        
+        query = f"SELECT count(*)/200000.0 FROM part WHERE p_name BETWEEN {x1} AND {x2} AND p_type = {y1}"
+        selectivity = execute_query(query)
+        
+        if selectivity is not None:
+            if not check_selectivity or selectivity >= 0.00001:
+                writer.writerow([x1, y1, x2, y2, selectivity])
+                return True
+    return False
+
 def main():
-    # Output file paths
     output_file = 'part_selectivity_results.csv'
     shuffled_file = 'part_selectivity_results_shuffled.csv'
-    
-    # Generate 1500 queries with BETWEEN conditions for both p_name and p_type
-    with open(output_file, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(['x1', 'y1', 'x2', 'y2', 'selectivity'])
-        
-        for _ in range(1500):
-            while True:
-                # Generate x1 and x2 ensuring x1 < x2
-                while True:
-                    x1 = f"'{generate_random_string()}'".lower()
-                    x2 = f"'{generate_random_string()}'".lower()
-                    if x1 < x2:
-                        break
-                
-                # Generate y1 and y2 ensuring y1 < y2
-                while True:
-                    y1 = f"'{generate_random_string(1, 3, True)}'".upper()
-                    y2 = f"'{generate_random_string(1, 3, True)}'".upper()
-                    if y1 < y2:
-                        break
-                
-                query = f"SELECT count(*)/200000.0 FROM part WHERE p_name BETWEEN {x1} AND {x2} AND p_type BETWEEN {y1} AND {y2}"
-                selectivity = execute_query(query)
-                
-                if selectivity is not None and selectivity >= 0.001:
-                    writer.writerow([x1, y1, x2, y2, selectivity])
+    target_rows = 2100
+
+    # Ensure file exists with header
+    if not os.path.exists(output_file):
+        with open(output_file, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['x1', 'y1', 'x2', 'y2', 'selectivity'])
+
+    # Count initial rows
+    with open(output_file, 'r') as f:
+        num_rows = sum(1 for row in f) - 1
+
+    # Phase 1: Generate with selectivity check
+    if num_rows < target_rows:
+        print(f"Starting Phase 1: Generating queries with selectivity check. Currently {num_rows} rows.")
+        with open(output_file, 'a', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            # Generate up to 1500 type 1 queries
+            while num_rows < 1500:
+                if generate_type1_query(writer, check_selectivity=True):
+                    num_rows += 1
+                    if num_rows % 50 == 0:
+                        print(f"Generated {num_rows} rows...")
+                else: # Could not generate a query, maybe DB issue
+                    break
+            
+            # Generate up to 2100 (600 more) type 2 queries
+            while 1500 <= num_rows < target_rows:
+                if generate_type2_query(writer, check_selectivity=True):
+                    num_rows += 1
+                    if num_rows % 50 == 0:
+                        print(f"Generated {num_rows} rows...")
+                else: # Could not generate a query
                     break
     
-    # Generate 600 queries with BETWEEN for p_name and exact match for p_type
-    with open(output_file, 'a', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        
-        for _ in range(600):
-            while True:
-                # Generate x1 and x2 ensuring x1 < x2
-                while True:
-                    x1 = f"'{generate_random_string()}'".lower()
-                    x2 = f"'{generate_random_string()}'".lower()
-                    if x1 < x2:
-                        break
-                
-                y1 = f"'{generate_p_type()}'".upper()
-                y2 = y1  # Same as y1 for exact match
-                
-                query = f"SELECT count(*)/200000.0 FROM part WHERE p_name BETWEEN {x1} AND {x2} AND p_type = {y1}"
-                selectivity = execute_query(query)
-                
-                if selectivity is not None and selectivity >= 0.001:
-                    writer.writerow([x1, y1, x2, y2, selectivity])
-                    break
-    
-    # Shuffle the rows and write to a new file
+    # Phase 2: If needed, generate more without check
+    with open(output_file, 'r') as f:
+        num_rows = sum(1 for row in f) - 1
+
+    if num_rows < target_rows:
+        print(f"Starting Phase 2: Have {num_rows}, generating {target_rows - num_rows} more without selectivity check.")
+        with open(output_file, 'a', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            while num_rows < target_rows:
+                # Use a ratio to decide which query type to generate
+                if random.random() < (1500.0 / target_rows):
+                    if generate_type1_query(writer, check_selectivity=False):
+                        num_rows += 1
+                else:
+                    if generate_type2_query(writer, check_selectivity=False):
+                        num_rows += 1
+                if num_rows % 50 == 0:
+                    print(f"Generated {num_rows} rows...")
+
+    print(f"Total rows: {num_rows}. Shuffling...")
+    # Shuffle the rows
     with open(output_file, 'r') as csvfile:
         reader = csv.reader(csvfile)
         header = next(reader)
@@ -112,6 +159,8 @@ def main():
         writer = csv.writer(csvfile)
         writer.writerow(header)
         writer.writerows(rows)
+    
+    print("Done.")
 
 if __name__ == "__main__":
     main()
