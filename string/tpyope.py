@@ -17,3 +17,8 @@ cipher2_encrypt = cipher2.encrypt(10)
 cipher3_encrypt = cipher3.encrypt(10)
 assert cipher1_encrypt < cipher2_encrypt < cipher3_encrypt
 print(cipher1_encrypt, cipher2_encrypt, cipher3_encrypt)
+
+word1 = "abcdefgh"
+word2 = "abcdefgy"
+print(int.from_bytes(word1.encode('utf-8').ljust(7, b'\x00')[:7], 'big'))
+print(int.from_bytes(word2.encode('utf-8').ljust(7, b'\x00')[:7], 'big'))
