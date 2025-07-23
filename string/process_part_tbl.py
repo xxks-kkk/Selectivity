@@ -19,7 +19,6 @@ OUTPUT_RANGE = ValueRange(0, 2**127 - 1) # Using a larger output range
 def convert_string(value, column_index):
     """
     Converts a string to an integer by using the string itself as the OPE key.
-    This method preserves order but is highly inefficient.
     """
     # The input range is small because we encrypt a constant value (10).
     # The key is the string value itself.
