@@ -31,8 +31,11 @@ def init_worker():
 # Function to convert a string to an integer using a given cipher
 def convert_string(value, column_index):
     """Converts a string to an integer using the cipher for the given column index."""
-    hashed_value = abs(hash(value))
-    return worker_ciphers[column_index].encrypt(hashed_value)
+    # Convert the first 7 bytes of the string to an integer to preserve order.
+    # Pad with null bytes if the string is shorter than 7 characters.
+    padded_value = value.encode('utf-8').ljust(7, b'\x00')[:7]
+    int_value = int.from_bytes(padded_value, 'big')
+    return worker_ciphers[column_index].encrypt(int_value)
 
 import os
 import multiprocessing as mp
